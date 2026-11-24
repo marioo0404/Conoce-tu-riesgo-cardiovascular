@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Conoce tu riesgo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* VOICE: claro y cercano, de salud pública; serio sin asustar
+   IDEA: una consulta corta, una pregunta a la vez, como en el consultorio
+   PICTURE: la tarjeta de pregunta con su barra de avance; al final, el medidor de nivel
+   COLOUR and TYPE: azul Tec, rojo corazón, tinta marino, como el póster; Figtree
+   LAYOUT: banda azul con trazo de ECG, una tarjeta centrada debajo */
+:root{color-scheme:light dark;--bg:light-dark(#fff,#0b1226);--ink:light-dark(#14213D,#e8edf8);--soft:light-dark(#EAF0FB,#16224a);--line:light-dark(#c3cfe8,#2c3d70);--blue:light-dark(#0033A0,#9db8ff);--red:light-dark(#C8243A,#ff8b99);--amber:light-dark(#975800,#f4b860);--mut:light-dark(#4a5672,#aab6d3);--card:light-dark(#fff,#111b38)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--soft);color:var(--ink);font:16px/1.55 Figtree,system-ui,Arial,sans-serif;overflow-x:clip;min-height:100vh}
+.top{background:#0033A0;color:#fff;padding:clamp(22px,4vw,40px) max(5vw,16px) 70px}
+.top .in{max-width:640px;margin:0 auto}
+.top h1{margin:0;font-size:clamp(30px,5vw,44px);line-height:1.05;font-weight:800;text-wrap:balance}
+.top p{margin:8px 0 0;font-size:16px;opacity:.92}
+.ecg{display:block;width:100%;height:56px;margin-top:14px}
+.box{max-width:640px;margin:-56px auto 0;padding:0 16px 40px}
+.card{background:var(--card);border-radius:24px;padding:clamp(22px,4vw,36px);box-shadow:0 12px 32px rgba(0,30,90,.14)}
+.prog{display:flex;justify-content:space-between;align-items:center;font-size:14px;font-weight:700;color:var(--mut)}
+.bar{height:8px;border-radius:4px;background:var(--soft);margin:10px 0 26px;overflow:hidden}
+.bar i{display:block;height:100%;background:#C8243A;border-radius:4px;transition:width .35s ease}
+h2{margin:0;font-size:clamp(24px,4vw,30px);line-height:1.15;font-weight:800;text-wrap:balance}
+.hint{margin:8px 0 0;color:var(--mut)}
+.opts{display:flex;flex-direction:column;gap:10px;margin-top:22px}
+.opt{font:inherit;font-size:17px;font-weight:600;text-align:left;min-height:56px;padding:12px 18px;border:2px solid var(--line);border-radius:14px;background:var(--bg);color:var(--ink);cursor:pointer;display:flex;align-items:center;gap:12px}
+.opt:hover{border-color:var(--blue)}
+.opt[aria-pressed=true]{background:#0033A0;border-color:#0033A0;color:#fff}
+.opt .dot{width:20px;height:20px;border-radius:50%;border:2px solid currentColor;flex:none}
+.opt[aria-pressed=true] .dot{background:#fff;box-shadow:inset 0 0 0 4px #0033A0}
+.num{display:flex;flex-wrap:wrap;gap:16px;margin-top:22px}
+.num label{display:flex;flex-direction:column;gap:6px;font-weight:700}
+.num input{font:inherit;font-size:20px;width:170px;min-height:56px;padding:8px 14px;border:2px solid var(--line);border-radius:14px;background:var(--bg);color:var(--ink)}
+.err{color:var(--red);font-weight:700;margin:12px 0 0;min-height:1.5em}
+.nav{display:flex;justify-content:space-between;gap:12px;margin-top:24px;flex-wrap:wrap}
+button{font:inherit;font-weight:700;min-height:50px;padding:10px 22px;border-radius:14px;border:2px solid var(--blue);background:transparent;color:var(--blue);cursor:pointer}
+button.pri{background:#0033A0;border-color:#0033A0;color:#fff}
+button.ghost{border-color:transparent}
+button:focus-visible,.opt:focus-visible,.num input:focus-visible{outline:3px solid #C8243A;outline-offset:2px}
+.step{animation:in .3s ease}
+@keyframes in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.tag{display:inline-block;background:var(--soft);color:var(--blue);font-weight:700;padding:5px 12px;border-radius:999px;font-size:14px}
+.lvl{font-size:15px;font-weight:700;color:var(--mut);margin-top:6px}
+.big{font-size:clamp(44px,9vw,64px);line-height:1;font-weight:800;margin:6px 0 0}
+.mwrap{position:relative;margin:22px 0 8px}
+.meter{height:16px;border-radius:8px;display:flex;overflow:hidden}
+.meter i{flex:1}.meter i:nth-child(1){background:var(--blue)}.meter i:nth-child(2){background:var(--amber)}.meter i:nth-child(3){background:var(--red)}
+.pin{position:absolute;top:-7px;left:0;width:8px;height:30px;border-radius:4px;background:var(--ink);transform:translateX(-50%);transition:left .9s cubic-bezier(.2,.8,.2,1)}
+.scale{display:flex;justify-content:space-between;font-size:13px;color:var(--mut)}
+.why{background:var(--soft);border-radius:16px;padding:16px 18px;margin-top:20px}
+.why h3,.do h3{margin:0 0 6px;font-size:17px}
+.why p{margin:0}
+.do{margin-top:18px}.do ul{margin:0;padding-left:20px}.do li{margin:4px 0}
+.warn{border:2px dashed var(--red);border-radius:16px;padding:14px 16px;font-size:15px;margin-top:20px}
+.warn b{color:var(--red)}
+.alert{background:#C8243A;color:#fff;border-radius:16px;padding:16px 18px;font-weight:700;font-size:17px;margin-bottom:18px}
+.muted{color:var(--mut);font-size:14px}
+.list{margin:18px 0 0;padding-left:20px}.list li{margin:6px 0}
+footer{text-align:center;color:var(--mut);font-size:14px;padding:0 16px 32px}
+@media(prefers-reduced-motion:reduce){.step{animation:none}.pin,.bar i{transition:none}}
+</style>
+</head>
+<body>
+<header class="top"><div class="in">
+<h1>Conoce tu riesgo cardiovascular</h1>
+<p>Orienta, no diagnostica.</p>
+<svg class="ecg" viewBox="0 0 640 56" preserveAspectRatio="none" aria-hidden="true"><path d="M0 36 H300 L314 36 L322 22 L332 36 L344 36 L352 46 L364 4 L378 52 L388 36 L404 36 L416 18 L430 36 H640" fill="none" stroke="#fff" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/></svg>
+</div></header>
+
+<main class="box"><div class="card" id="app" aria-live="polite"></div></main>
+<footer>Equipo Variables · Tecnológico de Monterrey · Prototipo académico · Contacto: a01178478@tec.mx</footer>
+
+<script>
+{
+const S=[
+{id:'sx',type:'multi',t:'Antes de empezar: ¿tienes alguno de estos síntomas ahora?',h:'Marca los que apliquen o elige "Ninguno".',o:['Dolor u opresión en el pecho','Falta de aire repentina','Debilidad en un lado del cuerpo o dificultad para hablar','Desmayo']},
+{id:'edad',type:'num',t:'¿Cuántos años tienes?',f:[['edad','Edad','Ej. 45',18,100]]},
+{id:'sexo',t:'Sexo asignado al nacer',o:[['m','Mujer',0],['h','Hombre',1]]},
+{id:'pa',t:'¿Cuál fue tu última presión arterial?',h:'El número de arriba / el de abajo. Si no la recuerdas, elige "No sé".',o:[['n','Menos de 120/80',0],['e','120–129 / menos de 80',1],['a1','130–139 u 80–89',2],['a2','140/90 o más',3],['c','180/120 o más',3],['ns','No sé',1]]},
+{id:'med',t:'¿Tomas medicamento para la presión?',o:[['no','No',0],['si','Sí',1]]},
+{id:'tab',t:'¿Fumas o vapeas?',o:[['nu','Nunca',0],['ex','Lo dejé',1],['si','Sí, actualmente',3]]},
+{id:'dia',t:'¿Te han diagnosticado diabetes?',o:[['no','No',0],['si','Sí',3],['ns','No sé',1]]},
+{id:'col',t:'¿Te han dicho que tienes colesterol alto?',o:[['no','No',0],['si','Sí',2],['ns','No sé',1]]},
+{id:'fam',t:'¿Tu padre, madre o hermanos tuvieron un infarto o una embolia antes de los 60 años?',o:[['no','No',0],['si','Sí',1],['ns','No sé',0]]},
+{id:'act',t:'¿Haces al menos 150 minutos de actividad física a la semana?',h:'Por ejemplo, 30 minutos de caminata rápida, 5 días.',o:[['si','Sí',0],['no','No',1]]},
+{id:'imc',type:'num',opt:true,t:'¿Cuánto pesas y cuánto mides?',h:'Es opcional; sirve para calcular tu índice de masa corporal.',f:[['peso','Peso (kg)','Ej. 72',30,300],['est','Estatura (cm)','Ej. 168',120,230]]}
+];
+const WHY={sexo:{h:'ser hombre'},pa:{e:'tu presión está elevada',a1:'tu presión está alta',a2:'tu presión está alta',c:'tu presión está muy alta',ns:'no conoces tu presión'},med:{si:'tomas medicamento para la presión'},tab:{ex:'fumaste en el pasado',si:'fumas actualmente'},dia:{si:'tienes diabetes',ns:'no sabes si tienes diabetes'},col:{si:'tienes colesterol alto',ns:'no conoces tu colesterol'},fam:{si:'hay infartos o embolias en tu familia'},act:{no:'haces poca actividad física'}};
+const TIPS={'pa:ns':'Mídete la presión en un centro de salud o una farmacia.','pa:a1':'Vuelve a medirte la presión en unas semanas.','dia:ns':'Pide una prueba de glucosa en tu próxima consulta.','col:ns':'Pide un perfil de lípidos (colesterol).','tab:si':'Dejar de fumar es de los cambios que más reducen el riesgo.','act:no':'Empieza con caminatas de 10 minutos y ve subiendo.'};
+const MAX=21;
+let i=-1;const A={};
+const app=document.getElementById('app');
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function intro(){
+app.innerHTML=`<div class="step"><span class="tag">11 preguntas · menos de 2 minutos</span>
+<h2 style="margin-top:14px">¿Deberías ir a una revisión del corazón?</h2>
+<p class="hint">Contesta unas preguntas sobre tu salud y tus hábitos. Al final te diremos tu nivel de riesgo orientativo y por qué.</p>
+<ul class="list"><li>Tus respuestas no se envían ni se guardan.</li><li>Es para personas de 18 años o más.</li><li>No sustituye una consulta médica.</li></ul>
+<div class="nav"><span></span><button class="pri" id="start">Empezar</button></div></div>`;
+document.getElementById('start').onclick=()=>go(0);
+}
+
+function go(n){i=n;if(i>=S.length)return result();render();}
+
+function render(){
+const q=S[i];const pct=Math.round(i/S.length*100);
+let body='';
+if(q.type==='multi'){const cur=A.sx||[];
+body=`<div class="opts">${q.o.map((l,k)=>`<button class="opt" data-k="${k}" aria-pressed="${cur.includes(k)}"><span class="dot"></span>${l}</button>`).join('')}</div>`;}
+else if(q.type==='num'){body=`<div class="num">${q.f.map(([id,l,ph,mn,mx])=>`<label for="${id}">${l}<input id="${id}" type="number" inputmode="decimal" min="${mn}" max="${mx}" placeholder="${ph}" value="${A[id]??''}"></label>`).join('')}</div><p class="err" id="err"></p>`;}
+else{body=`<div class="opts">${q.o.map(([v,l])=>`<button class="opt" data-v="${v}" aria-pressed="${A[q.id]===v}"><span class="dot"></span>${l}</button>`).join('')}</div>`;}
+const last=i===S.length-1;
+const next=q.type==='multi'?`<span style="display:flex;gap:8px;flex-wrap:wrap"><button class="ghost" id="none">Ninguno</button><button class="pri" id="next">Continuar</button></span>`:q.type==='num'?`<span style="display:flex;gap:8px;flex-wrap:wrap">${q.opt?'<button class="ghost" id="skip">Omitir</button>':''}<button class="pri" id="next">${last?'Ver mi resultado':'Siguiente'}</button></span>`:`<span></span>`;
+app.innerHTML=`<div class="step"><div class="prog"><span>Pregunta ${i+1} de ${S.length}</span><span>${pct}%</span></div><div class="bar"><i style="width:${pct}%"></i></div>
+<h2>${q.t}</h2>${q.h?`<p class="hint">${q.h}</p>`:''}${body}
+<div class="nav"><button class="ghost" id="back">← Atrás</button>${next}</div></div>`;
+document.getElementById('back').onclick=()=>i===0?intro():go(i-1);
+if(q.type==='multi'){
+app.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{const k=+b.dataset.k;const cur=A.sx||[];A.sx=cur.includes(k)?cur.filter(x=>x!==k):[...cur,k];b.setAttribute('aria-pressed',A.sx.includes(k));});
+document.getElementById('none').onclick=()=>{A.sx=[];go(i+1);};
+document.getElementById('next').onclick=()=>{if(!A.sx)A.sx=[];if(A.sx.length)return urgent();go(i+1);};
+}else if(q.type==='num'){
+const ins=[...app.querySelectorAll('input')];ins[0].focus();
+const submit=()=>{const err=document.getElementById('err');
+const vals=q.f.map(([id,,,mn,mx],k)=>{const v=parseFloat(ins[k].value);return{id,v,ok:v>=mn&&v<=mx,empty:ins[k].value===''}});
+if(q.opt&&vals.every(x=>x.empty)){q.f.forEach(([id])=>delete A[id]);return go(i+1);}
+const bad=vals.find(x=>!x.ok);
+if(bad){err.textContent=q.id==='edad'?(bad.v<18&&!bad.empty?'Esta orientación es para personas de 18 años o más.':'Escribe una edad entre 18 y 100.'):'Revisa los dos datos o elige "Omitir".';return;}
+vals.forEach(x=>A[x.id]=x.v);go(i+1);};
+document.getElementById('next').onclick=submit;
+ins.forEach(x=>x.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();submit();}}));
+const sk=document.getElementById('skip');if(sk)sk.onclick=()=>{q.f.forEach(([id])=>delete A[id]);go(i+1);};
+}else{
+app.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{A[q.id]=b.dataset.v;app.querySelectorAll('.opt').forEach(o=>o.setAttribute('aria-pressed',o===b));setTimeout(()=>go(i+1),260);});
+}
+}
+
+function urgent(){
+app.innerHTML=`<div class="step"><div class="alert">Si tienes alguno de estos síntomas ahora, llama al 911 o acude a urgencias. No esperes.</div>
+<h2>Esto no puede esperar a un cuestionario</h2>
+<p class="hint">Los síntomas que marcaste pueden ser señal de un infarto o una embolia. Pide ayuda de inmediato.</p>
+<div class="nav"><button class="ghost" id="back">← Cambiar mi respuesta</button></div></div>`;
+document.getElementById('back').onclick=()=>go(0);
+}
+
+function ageScore(a){return a<40?0:a<50?1:a<60?2:a<70?3:4}
+function join(a){return a.length<2?a.join(''):a.slice(0,-1).join(', ')+' y '+a[a.length-1]}
+
+function result(){
+let score=0;const f=[],tips=[];
+const sa=ageScore(A.edad);score+=sa;if(sa>=2)f.push([sa,`tienes ${A.edad} años`]);
+for(const q of S){if(!q.o||q.type)continue;const v=A[q.id];const o=q.o.find(x=>x[0]===v);if(!o)continue;score+=o[2];const w=WHY[q.id]&&WHY[q.id][v];if(o[2]>0&&w)f.push([o[2],w]);const t=TIPS[q.id+':'+v];if(t)tips.push(t);}
+let imcTxt='';
+if(A.peso&&A.est){const imc=A.peso/((A.est/100)**2);imcTxt=`Tu índice de masa corporal es ${imc.toFixed(1)}.`;
+if(imc>=30){score+=2;f.push([2,'tu peso está bastante por encima de lo recomendado']);}else if(imc>=25){score+=1;f.push([1,'tienes algo de sobrepeso']);}}
+f.sort((a,b)=>b[0]-a[0]);
+const top=f.slice(0,3).map(x=>x[1]);
+const L=score<=5?['Bajo','var(--blue)','Revisa tu presión al menos una vez al año y mantén tus buenos hábitos.']:score<=10?['Moderado','var(--amber)','Te recomendamos agendar una revisión médica en los próximos meses para medir tu presión, glucosa y colesterol.']:['Alto','var(--red)','Te recomendamos acudir a revisión médica pronto, en las próximas semanas.'];
+let why;
+if(L[0]==='Bajo')why=top.length?`Tienes pocos factores de riesgo. El que más pesa es que ${top[0]}.`:'No marcaste factores de riesgo importantes.';
+else why=`Creemos que tu nivel es ${L[0].toLowerCase()} sobre todo porque ${join(top)}.`;
+why+=` En total sumas ${score} de ${MAX} puntos.`;
+const crisis=A.pa==='c';
+app.innerHTML=`<div class="step">${crisis?'<div class="alert">Una presión de 180/120 o más necesita atención médica hoy mismo.</div>':''}
+<span class="tag">Tu resultado</span>
+<div class="lvl">Nivel de riesgo orientativo</div>
+<div class="big" style="color:${L[1]}">${L[0]}</div>
+<div class="mwrap"><div class="meter" aria-hidden="true"><i></i><i></i><i></i></div><div class="pin" id="pin"></div></div>
+<div class="scale"><span>Bajo</span><span>Moderado</span><span>Alto</span></div>
+<div class="why"><h3>¿Por qué?</h3><p>${esc(why)}</p></div>
+<div class="do"><h3>Te recomendamos</h3><ul><li>${L[2]}</li>${tips.slice(0,3).map(t=>`<li>${t}</li>`).join('')}</ul>${imcTxt?`<p class="muted" style="margin:8px 0 0">${imcTxt}</p>`:''}</div>
+<div class="warn"><b>Resultado no validado.</b> Este puntaje lo diseñó el Equipo Variables con factores de riesgo conocidos, pero todavía no se ha probado en población mexicana. Es una recomendación, no un diagnóstico.</div>
+<div class="nav"><button class="ghost" id="edit">← Revisar respuestas</button><button class="pri" id="again">Volver a empezar</button></div></div>`;
+const raw=score<=5?score/5*33:score<=10?33+(score-5)/5*33:66+(score-10)/(MAX-10)*34;
+const pos=Math.min(98,Math.max(2,raw));
+requestAnimationFrame(()=>requestAnimationFrame(()=>{document.getElementById('pin').style.left=pos+'%';}));
+document.getElementById('edit').onclick=()=>go(1);
+document.getElementById('again').onclick=()=>{for(const k in A)delete A[k];intro();};
+}
+intro();
+}
+</script>
+</body>
+</html>
